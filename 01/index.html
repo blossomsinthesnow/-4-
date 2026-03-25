@@ -7,26 +7,38 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 기본 레이아웃 및 스크롤 스냅 설정 */
         html, body {
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow: hidden; 
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background: #f3f4f6;
         }
+        
         .snap-container {
             height: 100vh;
             overflow-y: scroll;
             scroll-snap-type: y mandatory;
             scroll-behavior: smooth;
+            overscroll-behavior-y: contain;
+            -webkit-overflow-scrolling: touch;
         }
+        
         .section {
             height: 100vh;
+            width: 100%;
             scroll-snap-align: start;
+            scroll-snap-stop: always;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            flex-shrink: 0;
+            padding-bottom: 80px; /* 네비게이션 바 공간 확보 */
         }
+
+        /* 팝업 오버레이 */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -42,166 +54,186 @@
             display: flex;
         }
         
-        /* 하단 여정 표시기 스타일 */
+        /* 하단 여정 표시기 디자인 */
         .journey-bar {
             position: fixed;
-            bottom: 2rem;
+            bottom: 1.5rem;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
             gap: 0.5rem;
             z-index: 50;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s ease, transform 0.3s ease;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
         }
+        
         .journey-step {
             height: 4px;
-            width: 60px;
+            width: 50px;
             background: rgba(0, 0, 0, 0.1);
             border-radius: 2px;
             position: relative;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
         }
+        
+        .journey-step:hover {
+            background: rgba(79, 70, 229, 0.3);
+            height: 6px;
+        }
+        
         .journey-step.active {
             background: #4f46e5;
             height: 6px;
+            width: 70px;
         }
+        
         .journey-label {
             position: absolute;
             top: -1.5rem;
             left: 0;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 800;
             color: #94a3b8;
             white-space: nowrap;
+            pointer-events: none;
+            transition: color 0.3s ease;
         }
+        
         .journey-step.active .journey-label {
             color: #4f46e5;
         }
 
-        /* 다크모드 대응 여정 바 (슬라이드 배경색에 따라 자동 변경되도록 스크립트 처리 예정) */
+        /* 다크 배경용 UI 스타일 */
+        .journey-bar.light-ui { background: rgba(0, 0, 0, 0.3); }
         .journey-bar.light-ui .journey-step { background: rgba(255, 255, 255, 0.2); }
         .journey-bar.light-ui .journey-label { color: rgba(255, 255, 255, 0.4); }
         .journey-bar.light-ui .journey-step.active { background: #818cf8; }
         .journey-bar.light-ui .journey-step.active .journey-label { color: #818cf8; }
+
+        /* 스크롤바 숨기기 */
+        .snap-container::-webkit-scrollbar { display: none; }
+        .snap-container { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="font-sans text-gray-900 bg-gray-100">
+<body>
 
-    <!-- 하단 여정 표시기 (첫 슬라이드에서는 숨김) -->
+    <!-- 하단 네비게이션 상태바 -->
     <div id="journey-indicator" class="journey-bar opacity-0">
-        <div class="journey-step" id="step1-indicator"><span class="journey-label">STEP 1</span></div>
-        <div class="journey-step" id="step2-indicator"><span class="journey-label">STEP 2</span></div>
-        <div class="journey-step" id="step3-indicator"><span class="journey-label">STEP 3</span></div>
-        <div class="journey-step" id="step4-indicator"><span class="journey-label">STEP 4</span></div>
-        <div class="journey-step" id="step5-indicator"><span class="journey-label">STEP 5</span></div>
+        <div class="journey-step" id="step1-indicator" onclick="scrollToStep(1)"><span class="journey-label">STEP 1</span></div>
+        <div class="journey-step" id="step2-indicator" onclick="scrollToStep(2)"><span class="journey-label">STEP 2</span></div>
+        <div class="journey-step" id="step3-indicator" onclick="scrollToStep(3)"><span class="journey-label">STEP 3</span></div>
+        <div class="journey-step" id="step4-indicator" onclick="scrollToStep(4)"><span class="journey-label">STEP 4</span></div>
+        <div class="journey-step" id="step5-indicator" onclick="scrollToStep(5)"><span class="journey-label">STEP 5</span></div>
     </div>
 
-    <!-- Main Content -->
     <div class="snap-container" id="main-container">
         
-        <!-- [INTRO] 나만의 브랜드 수업 -->
+        <!-- [INTRO] -->
         <section id="intro" class="section bg-gradient-to-br from-indigo-50 to-white" data-step="0">
             <div class="max-w-4xl text-center px-8">
-                <div class="bg-white w-24 h-24 rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 text-indigo-600">
-                    <i class="fa-solid fa-quote-left text-4xl"></i>
+                <div class="bg-white w-20 h-20 rounded-3xl shadow-xl flex items-center justify-center mx-auto mb-6 text-indigo-600">
+                    <i class="fa-solid fa-quote-left text-3xl"></i>
                 </div>
-                <h1 class="text-6xl md:text-8xl font-black text-indigo-900 tracking-tighter mb-4">나만의 브랜드 수업</h1>
-                <div class="h-1 w-24 bg-indigo-600 mx-auto rounded-full my-6"></div>
-                <h2 class="text-2xl md:text-3xl font-bold text-indigo-700 mb-2">국어교육전공 정석훈</h2>
-                <p class="text-lg text-gray-500 font-medium">마음과 마음을 잇는 시(詩) 쓰기 프로젝트</p>
-                <div class="mt-10 animate-bounce text-indigo-300">
-                    <i class="fa-solid fa-arrow-down text-3xl"></i>
+                <h1 class="text-5xl md:text-7xl font-black text-indigo-900 tracking-tighter mb-4">나만의 브랜드 수업</h1>
+                <div class="h-1 w-20 bg-indigo-600 mx-auto rounded-full my-6"></div>
+                <h2 class="text-xl md:text-2xl font-bold text-indigo-700 mb-2">국어교육전공 정석훈</h2>
+                <p class="text-md text-gray-500 font-medium">마음과 마음을 잇는 시(詩) 쓰기 프로젝트</p>
+                <div class="mt-8 animate-bounce text-indigo-300">
+                    <i class="fa-solid fa-arrow-down text-2xl"></i>
                 </div>
             </div>
         </section>
 
-        <!-- [STEP 1] 브랜드의 첫인상 (텍스트 제거 버전) -->
+        <!-- [STEP 1] -->
         <section id="step1" class="section bg-blue-50" data-step="1">
             <div class="max-w-4xl text-center px-8">
-                <div class="bg-white p-6 rounded-3xl shadow-lg mb-8 inline-block text-blue-500">
-                    <i class="fa-solid fa-user text-4xl"></i>
+                <div class="bg-white p-5 rounded-3xl shadow-lg mb-6 inline-block text-blue-500">
+                    <i class="fa-solid fa-user text-3xl"></i>
                 </div>
                 <div class="mb-6">
-                    <h2 class="text-3xl md:text-5xl font-black text-gray-800 bg-white/50 px-8 py-4 rounded-2xl italic">
+                    <h2 class="text-2xl md:text-4xl font-black text-gray-800 bg-white/50 px-6 py-4 rounded-2xl italic">
                         "나와는 다른 세계를 느끼게 만들어주는 교사"
                     </h2>
                 </div>
-                <p class="text-xl text-gray-700 font-medium leading-relaxed max-w-2xl mx-auto">
+                <p class="text-lg text-gray-700 font-medium leading-relaxed max-w-2xl mx-auto">
                     나라는 세계에서 벗어나 타인을 이해하고 공감하는 여정
                 </p>
-                <button onclick="openPopup('00.png')" class="mt-10 px-8 py-4 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg flex items-center gap-3 mx-auto">
+                <button onclick="openPopup('00.png')" class="mt-8 px-6 py-3 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2 mx-auto text-sm">
                     <i class="fa-solid fa-layer-group"></i> 수업 인포그래픽 보기
                 </button>
             </div>
         </section>
 
-        <!-- [STEP 2] 기획 동기 (이미지/아이콘 추가) -->
+        <!-- [STEP 2] 기획 동기 - 버튼 겹침 해결 파트 -->
         <section id="step2-trigger" class="section bg-purple-50" data-step="2">
-            <div class="max-w-4xl text-center px-8">
-                <div class="bg-white p-6 rounded-3xl shadow-lg mb-8 inline-block text-purple-500">
-                    <i class="fa-solid fa-lightbulb text-4xl"></i>
+            <div class="max-w-4xl text-center px-8 flex flex-col items-center">
+                <div class="bg-white p-5 rounded-3xl shadow-lg mb-4 inline-block text-purple-500">
+                    <i class="fa-solid fa-lightbulb text-3xl"></i>
                 </div>
-                <div class="mb-6">
-                    <h1 class="text-4xl md:text-6xl font-black mt-2 mb-4 text-gray-800">기획 동기</h1>
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-600 bg-white/50 px-4 py-1 rounded-lg italic">
+                <div class="mb-4">
+                    <h1 class="text-3xl md:text-5xl font-black text-gray-800">기획 동기</h1>
+                    <h2 class="text-lg md:text-xl font-bold text-gray-500 italic mt-2">
                         "사람은 자기만의 '썰'이 있어야 해"
                     </h2>
                 </div>
-                <div class="mt-6 relative max-w-2xl mx-auto">
-                    <div class="bg-white p-4 rounded-2xl shadow-xl border-2 border-dashed border-purple-200 overflow-hidden">
-                        <div class="py-10 text-center relative">
-                            <i class="fa-solid fa-chalkboard-user text-6xl text-purple-200 mb-4"></i>
-                            <p class="text-purple-600 font-bold text-xl leading-snug relative z-10">
+                <!-- 카드 크기 소폭 축소 및 여백 조정 -->
+                <div class="relative w-full max-w-lg mx-auto">
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border-2 border-dashed border-purple-200">
+                        <div class="py-6 text-center">
+                            <i class="fa-solid fa-chalkboard-user text-4xl text-purple-200 mb-3"></i>
+                            <p class="text-purple-600 font-bold text-lg leading-snug">
                                 "자신의 이야기를 시로 쓰는 것,<br>그것이 삶을 가꾸는 시작이란다."
                             </p>
-                            <p class="text-xs text-gray-400 mt-6">[고등학교 국어 선생님의 가르침]</p>
+                            <p class="text-[10px] text-gray-400 mt-4">[고등학교 국어 선생님의 가르침]</p>
                         </div>
                     </div>
                 </div>
-                <div class="flex gap-4 mt-10 justify-center">
-                    <button onclick="openPopup('01.jpg')" class="px-8 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all shadow-md">문집 보기</button>
-                    <button onclick="openPopup('02.jpg')" class="px-8 py-3 bg-white text-purple-600 border-2 border-purple-600 rounded-xl font-bold hover:bg-purple-50 transition-all">보기글 확인</button>
+                <!-- 버튼 위치 상향 조정 및 크기 최적화 -->
+                <div class="flex gap-3 mt-8 justify-center">
+                    <button onclick="openPopup('01.jpg')" class="px-6 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all shadow-md text-sm">문집 보기</button>
+                    <button onclick="openPopup('02.jpg')" class="px-6 py-3 bg-white text-purple-600 border-2 border-purple-600 rounded-xl font-bold hover:bg-purple-50 transition-all text-sm">보기글 확인</button>
                 </div>
             </div>
         </section>
 
-        <!-- [STEP 2] 브랜드의 뿌리 (핵심 역량 추가) -->
+        <!-- [STEP 2] 브랜드의 뿌리 -->
         <section id="step2-core" class="section bg-green-50" data-step="2">
             <div class="max-w-5xl text-center px-8">
-                <div class="bg-white p-6 rounded-3xl shadow-lg mb-8 inline-block text-green-500">
-                    <i class="fa-solid fa-tree text-4xl"></i>
+                <div class="bg-white p-5 rounded-3xl shadow-lg mb-6 inline-block text-green-500">
+                    <i class="fa-solid fa-tree text-3xl"></i>
                 </div>
-                <div class="mb-10">
-                    <h1 class="text-4xl md:text-6xl font-black mt-2 mb-4 text-gray-800">브랜드의 뿌리</h1>
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-600 italic">국어과 핵심 역량과 공감의 가치</h2>
+                <div class="mb-8">
+                    <h1 class="text-3xl md:text-5xl font-black text-gray-800">브랜드의 뿌리</h1>
+                    <h2 class="text-lg md:text-xl font-bold text-gray-600 italic">국어과 핵심 역량과 공감의 가치</h2>
                 </div>
-                
-                <!-- 국어과 핵심 역량 상세 -->
-                <div class="flex flex-wrap justify-center gap-2 mb-10 max-w-3xl mx-auto">
-                    <span class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold shadow-sm">비판적·창의적 사고</span>
-                    <span class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold shadow-sm">디지털·미디어</span>
-                    <span class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold shadow-sm">의사소통</span>
-                    <span class="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold shadow-sm">공동체·대인 관계</span>
-                    <span class="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold shadow-sm">문화 향유</span>
-                    <span class="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-bold shadow-sm">자기 성찰·계발</span>
+                <div class="flex flex-wrap justify-center gap-2 mb-8 max-w-3xl mx-auto">
+                    <span class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm">비판적·창의적 사고</span>
+                    <span class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm">디지털·미디어</span>
+                    <span class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-sm">의사소통</span>
+                    <span class="px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-sm">공동체·대인 관계</span>
+                    <span class="px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-sm">문화 향유</span>
+                    <span class="px-3 py-1 bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-sm">자기 성찰·계발</span>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="p-8 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                        <i class="fa-solid fa-wand-magic-sparkles text-3xl text-yellow-500 mb-4"></i>
-                        <h4 class="font-bold text-xl mb-2">자기 표현</h4>
-                        <p class="text-sm text-gray-500">내면의 감정을 글로 형상화</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                        <i class="fa-solid fa-wand-magic-sparkles text-2xl text-yellow-500 mb-3"></i>
+                        <h4 class="font-bold text-lg mb-1">자기 표현</h4>
+                        <p class="text-xs text-gray-400">내면의 감정을 글로 형상화</p>
                     </div>
-                    <div class="p-8 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                        <i class="fa-solid fa-bullseye text-3xl text-green-500 mb-4"></i>
-                        <h4 class="font-bold text-xl mb-2">메타인지</h4>
-                        <p class="text-sm text-gray-500">자신을 객관적으로 돌아보기</p>
+                    <div class="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                        <i class="fa-solid fa-bullseye text-2xl text-green-500 mb-3"></i>
+                        <h4 class="font-bold text-lg mb-1">메타인지</h4>
+                        <p class="text-xs text-gray-400">자신을 객관적으로 돌아보기</p>
                     </div>
-                    <div class="p-8 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                        <i class="fa-solid fa-heart text-3xl text-red-500 mb-4"></i>
-                        <h4 class="font-bold text-xl mb-2">공감 능력</h4>
-                        <p class="text-sm text-gray-500">타인의 세계를 경험하고 존중</p>
+                    <div class="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                        <i class="fa-solid fa-heart text-2xl text-red-500 mb-3"></i>
+                        <h4 class="font-bold text-lg mb-1">공감 능력</h4>
+                        <p class="text-xs text-gray-400">타인의 세계를 경험하고 존중</p>
                     </div>
                 </div>
             </div>
@@ -210,95 +242,83 @@
         <!-- [STEP 3] 디지털 작업실 -->
         <section id="step3" class="section bg-orange-50" data-step="3">
             <div class="max-w-4xl text-center px-8">
-                <div class="bg-white p-6 rounded-3xl shadow-lg mb-8 inline-block text-orange-500">
-                    <i class="fa-solid fa-desktop text-4xl"></i>
+                <div class="bg-white p-5 rounded-3xl shadow-lg mb-6 inline-block text-orange-500">
+                    <i class="fa-solid fa-desktop text-3xl"></i>
                 </div>
-                <div class="mb-10">
-                    <h1 class="text-4xl md:text-6xl font-black mt-2 mb-4 text-gray-800">디지털 작업실</h1>
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-600">선정 도구: 패들렛(Padlet)</h2>
+                <div class="mb-8">
+                    <h1 class="text-3xl md:text-5xl font-black text-gray-800">디지털 작업실</h1>
+                    <h2 class="text-lg md:text-xl font-bold text-gray-600">선정 도구: 패들렛(Padlet)</h2>
                 </div>
-                <div class="space-y-4 max-w-lg mx-auto">
-                    <div class="flex items-center gap-4 bg-white p-5 rounded-xl shadow-sm border-l-8 border-orange-400">
-                        <span class="text-2xl">✍️</span>
-                        <p class="text-gray-700 font-bold">누구나 손쉽게 시를 창작하고 게시</p>
+                <div class="space-y-3 max-w-lg mx-auto">
+                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border-l-8 border-orange-400">
+                        <span class="text-xl">✍️</span>
+                        <p class="text-gray-700 font-bold text-sm">누구나 손쉽게 시를 창작하고 게시</p>
                     </div>
-                    <div class="flex items-center gap-4 bg-white p-5 rounded-xl shadow-sm border-l-8 border-orange-400">
-                        <span class="text-2xl">💬</span>
-                        <p class="text-gray-700 font-bold">실시간 감상평과 피드백 공유</p>
+                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border-l-8 border-orange-400">
+                        <span class="text-xl">💬</span>
+                        <p class="text-gray-700 font-bold text-sm">실시간 감상평과 피드백 공유</p>
                     </div>
-                    <div class="flex items-center gap-4 bg-white p-5 rounded-xl shadow-sm border-l-8 border-orange-400">
-                        <span class="text-2xl">📁</span>
-                        <p class="text-gray-700 font-bold">키워드별 글감 분류 및 관리 최적화</p>
+                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border-l-8 border-orange-400">
+                        <span class="text-xl">📁</span>
+                        <p class="text-gray-700 font-bold text-sm">키워드별 글감 분류 및 관리 최적화</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- [STEP 4] 시그니처 활동 (단계별 아이콘 추가) -->
+        <!-- [STEP 4] 시그니처 활동 -->
         <section id="step4" class="section bg-indigo-50" data-step="4">
             <div class="max-w-5xl text-center px-8">
-                <div class="bg-white p-6 rounded-3xl shadow-lg mb-8 inline-block text-indigo-500">
-                    <i class="fa-solid fa-layer-group text-4xl"></i>
+                <div class="bg-white p-5 rounded-3xl shadow-lg mb-6 inline-block text-indigo-500">
+                    <i class="fa-solid fa-layer-group text-3xl"></i>
                 </div>
-                <div class="mb-10">
-                    <h1 class="text-4xl md:text-6xl font-black mt-2 mb-4 text-gray-800">시그니처 활동</h1>
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-600">수업의 4단계 흐름</h2>
+                <div class="mb-8">
+                    <h1 class="text-3xl md:text-5xl font-black text-gray-800">시그니처 활동</h1>
+                    <h2 class="text-lg md:text-xl font-bold text-gray-600">수업의 4단계 흐름</h2>
                 </div>
-                <div class="flex flex-col md:flex-row items-center justify-center gap-4">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm w-48 border-t-4 border-blue-500 hover:-translate-y-2 transition-transform">
-                        <span class="text-xs font-bold text-blue-500 block mb-2">Phase 1</span>
-                        <i class="fa-solid fa-message text-3xl text-blue-400 mb-3"></i>
-                        <p class="font-bold text-gray-800">썰의 중요성</p>
-                        <p class="text-xs text-gray-400 mt-2">이야기의 힘 알기</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-blue-500">
+                        <span class="text-[10px] font-bold text-blue-500 block">Phase 1</span>
+                        <i class="fa-solid fa-message text-2xl text-blue-400 my-2"></i>
+                        <p class="font-bold text-gray-800 text-sm">썰의 중요성</p>
                     </div>
-                    <i class="fa-solid fa-chevron-right hidden md:block text-gray-300"></i>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm w-48 border-t-4 border-yellow-500 hover:-translate-y-2 transition-transform">
-                        <span class="text-xs font-bold text-yellow-500 block mb-2">Phase 2</span>
-                        <i class="fa-solid fa-magnifying-glass text-3xl text-yellow-400 mb-3"></i>
-                        <p class="font-bold text-gray-800">일상 글감</p>
-                        <p class="text-xs text-gray-400 mt-2">감정 키워드 발견</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-yellow-500">
+                        <span class="text-[10px] font-bold text-yellow-500 block">Phase 2</span>
+                        <i class="fa-solid fa-magnifying-glass text-2xl text-yellow-400 my-2"></i>
+                        <p class="font-bold text-gray-800 text-sm">일상 글감</p>
                     </div>
-                    <i class="fa-solid fa-chevron-right hidden md:block text-gray-300"></i>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm w-48 border-t-4 border-green-500 hover:-translate-y-2 transition-transform">
-                        <span class="text-xs font-bold text-green-500 block mb-2">Phase 3</span>
-                        <i class="fa-solid fa-pen-nib text-3xl text-green-400 mb-3"></i>
-                        <p class="font-bold text-gray-800">진솔한 쓰기</p>
-                        <p class="text-xs text-gray-400 mt-2">내면 목소리 기록</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-green-500">
+                        <span class="text-[10px] font-bold text-green-500 block">Phase 3</span>
+                        <i class="fa-solid fa-pen-nib text-2xl text-green-400 my-2"></i>
+                        <p class="font-bold text-gray-800 text-sm">진솔한 쓰기</p>
                     </div>
-                    <i class="fa-solid fa-chevron-right hidden md:block text-gray-300"></i>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm w-48 border-t-4 border-pink-500 hover:-translate-y-2 transition-transform">
-                        <span class="text-xs font-bold text-pink-500 block mb-2">Phase 4</span>
-                        <i class="fa-solid fa-users text-3xl text-pink-400 mb-3"></i>
-                        <p class="font-bold text-gray-800">공유와 감상</p>
-                        <p class="text-xs text-gray-400 mt-2">타인의 세계 공감</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-pink-500">
+                        <span class="text-[10px] font-bold text-pink-500 block">Phase 4</span>
+                        <i class="fa-solid fa-users text-2xl text-pink-400 my-2"></i>
+                        <p class="font-bold text-gray-800 text-sm">공유와 감상</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- [STEP 4-ADD] 몰입의 순간 (신규 추가) -->
+        <!-- [STEP 4-ADD] 몰입의 순간 -->
         <section id="step4-moment" class="section bg-slate-900 overflow-hidden" data-step="4">
-            <!-- 배경 시각화 (몰입하는 이미지 느낌의 플레이스홀더) -->
-            <div class="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center"></div>
+            <div class="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900"></div>
-            
             <div class="relative z-10 max-w-5xl w-full text-center px-8 text-white">
-                <h1 class="text-4xl md:text-6xl font-black mb-16">눈을 반짝이며 몰입하는 순간</h1>
-                <div class="flex flex-col md:flex-row justify-center gap-8">
-                    <div class="bg-white/10 backdrop-blur-md p-10 rounded-3xl border border-white/20 flex flex-col items-center flex-1">
-                        <i class="fa-solid fa-pen-fancy text-4xl text-indigo-400 mb-4"></i>
-                        <h3 class="text-2xl font-black mb-2">이야기 생산자</h3>
-                        <p class="text-sm text-gray-300">나만의 삶을 텍스트로 구축</p>
+                <h1 class="text-3xl md:text-5xl font-black mb-10">눈을 반짝이며 몰입하는 순간</h1>
+                <div class="flex flex-col md:flex-row justify-center gap-6">
+                    <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 flex flex-col items-center flex-1">
+                        <i class="fa-solid fa-pen-fancy text-3xl text-indigo-400 mb-3"></i>
+                        <h3 class="text-lg font-black">이야기 생산자</h3>
                     </div>
-                    <div class="bg-white/10 backdrop-blur-md p-10 rounded-3xl border border-white/20 flex flex-col items-center flex-1">
-                        <i class="fa-solid fa-book-open-reader text-4xl text-emerald-400 mb-4"></i>
-                        <h3 class="text-2xl font-black mb-2">이야기 향유자</h3>
-                        <p class="text-sm text-gray-300">타인의 세계를 즐겁게 탐험</p>
+                    <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 flex flex-col items-center flex-1">
+                        <i class="fa-solid fa-book-open-reader text-3xl text-emerald-400 mb-3"></i>
+                        <h3 class="text-lg font-black">이야기 향유자</h3>
                     </div>
-                    <div class="bg-white/10 backdrop-blur-md p-10 rounded-3xl border border-white/20 flex flex-col items-center flex-1">
-                        <i class="fa-solid fa-hand-holding-heart text-4xl text-rose-400 mb-4"></i>
-                        <h3 class="text-2xl font-black mb-2">공감자</h3>
-                        <p class="text-sm text-gray-300">너와 나의 연결고리를 발견</p>
+                    <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 flex flex-col items-center flex-1">
+                        <i class="fa-solid fa-hand-holding-heart text-3xl text-rose-400 mb-3"></i>
+                        <h3 class="text-lg font-black">공감자</h3>
                     </div>
                 </div>
             </div>
@@ -307,51 +327,45 @@
         <!-- [STEP 5] 브랜딩의 열매 -->
         <section id="step5" class="section bg-white" data-step="5">
             <div class="max-w-4xl text-center px-8">
-                <div class="bg-indigo-100 p-6 rounded-3xl mb-8 inline-block text-yellow-500">
-                    <i class="fa-solid fa-star text-4xl"></i>
+                <div class="bg-indigo-100 p-5 rounded-3xl mb-6 inline-block text-yellow-500">
+                    <i class="fa-solid fa-star text-3xl"></i>
                 </div>
-                <div class="mb-10">
-                    <h1 class="text-4xl md:text-6xl font-black mt-2 mb-4 text-gray-800">브랜딩의 열매</h1>
-                    <h2 class="text-xl md:text-2xl font-bold text-gray-600">우리가 꿈꾸는 교실</h2>
+                <div class="mb-8">
+                    <h1 class="text-3xl md:text-5xl font-black text-gray-800">브랜딩의 열매</h1>
+                    <h2 class="text-lg md:text-xl font-bold text-gray-600">우리가 꿈꾸는 교실</h2>
                 </div>
-                <div class="space-y-12">
-                    <div class="inline-block px-10 py-6 bg-gray-900 text-white rounded-3xl shadow-2xl">
-                        <h3 class="text-3xl font-black mb-1">최종 산출물: 우리들의 문집</h3>
+                <div class="space-y-10">
+                    <div class="inline-block px-8 py-4 bg-gray-900 text-white rounded-2xl shadow-xl">
+                        <h3 class="text-2xl font-black">최종 산출물: 우리들의 문집</h3>
                     </div>
-                    <div class="flex justify-center gap-16">
+                    <div class="flex justify-center gap-12">
                         <div class="flex flex-col items-center">
-                            <i class="fa-solid fa-face-smile text-5xl text-yellow-500 mb-3"></i>
-                            <p class="font-bold text-xl">나를 표현하는 용기</p>
+                            <i class="fa-solid fa-face-smile text-4xl text-yellow-500 mb-2"></i>
+                            <p class="font-bold text-lg">표현하는 용기</p>
                         </div>
                         <div class="flex flex-col items-center">
-                            <i class="fa-solid fa-heart text-5xl text-red-500 mb-3"></i>
-                            <p class="font-bold text-xl">즐거운 읽기와 공감</p>
+                            <i class="fa-solid fa-heart text-4xl text-red-500 mb-2"></i>
+                            <p class="font-bold text-lg">즐거운 공감</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- [ENDING] 감사합니다 & 참고자료 -->
+        <!-- [ENDING] -->
         <section id="ending" class="section bg-slate-50" data-step="5">
             <div class="max-w-4xl w-full text-center px-8">
-                <h1 class="text-6xl md:text-8xl font-black text-indigo-900 mb-12">감사합니다</h1>
-                <div class="bg-white p-10 rounded-3xl shadow-sm border border-gray-200 text-left">
-                    <h3 class="text-xl font-black text-gray-800 mb-6 flex items-center gap-2">
+                <h1 class="text-5xl md:text-7xl font-black text-indigo-900 mb-8">감사합니다</h1>
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-left">
+                    <h3 class="text-lg font-black text-gray-800 mb-4 flex items-center gap-2">
                         <i class="fa-solid fa-book text-indigo-500"></i> 참고자료
                     </h3>
-                    <ul class="space-y-4 text-gray-600 leading-relaxed">
-                        <li class="flex gap-3">
-                            <span class="text-indigo-500">•</span>
-                            <p>구자행. (2013). <strong>자라온 이야기 쓰기 지도</strong>. 우리말교육현장연구 7.2. 41-68.</p>
-                        </li>
-                        <li class="flex gap-3">
-                            <span class="text-indigo-500">•</span>
-                            <p>부산연제고등학교 학생. (2017). <strong>생긴대로 살아야지</strong>. 보리</p>
-                        </li>
+                    <ul class="space-y-3 text-sm text-gray-600">
+                        <li class="flex gap-2"><span>•</span><p>구자행. (2013). 자라온 이야기 쓰기 지도. 우리말교육현장연구.</p></li>
+                        <li class="flex gap-2"><span>•</span><p>부산연제고등학교 학생. (2017). 생긴대로 살아야지. 보리</p></li>
                     </ul>
                 </div>
-                <p class="mt-12 text-gray-400 font-bold tracking-widest uppercase">Presenter. Jeong Seok-hun</p>
+                <p class="mt-8 text-gray-400 font-bold tracking-widest uppercase text-xs">Presenter. Jeong Seok-hun</p>
             </div>
         </section>
 
@@ -360,10 +374,10 @@
     <!-- Popup Container -->
     <div id="popup" class="popup-overlay" onclick="closePopup()">
         <div class="relative bg-white rounded-2xl p-2 max-w-4xl w-full shadow-2xl" onclick="event.stopPropagation()">
-            <button onclick="closePopup()" class="absolute -top-12 right-0 text-white flex items-center gap-2 font-bold text-xl">
-                <i class="fa-solid fa-xmark text-2xl"></i> 닫기
+            <button onclick="closePopup()" class="absolute -top-10 right-0 text-white flex items-center gap-2 font-bold text-lg">
+                <i class="fa-solid fa-xmark"></i> 닫기
             </button>
-            <div class="bg-gray-50 rounded-xl p-4 flex justify-center items-center min-h-[300px]">
+            <div class="bg-gray-50 rounded-xl p-2 flex justify-center items-center">
                 <img id="popup-img" src="" alt="Popup Image" class="max-w-full max-h-[80vh] object-contain rounded-lg">
             </div>
         </div>
@@ -374,7 +388,6 @@
         const indicator = document.getElementById('journey-indicator');
         const sections = document.querySelectorAll('.section');
 
-        // Scroll to Specific Step Indicator
         const stepIndicators = {
             1: document.getElementById('step1-indicator'),
             2: document.getElementById('step2-indicator'),
@@ -383,7 +396,13 @@
             5: document.getElementById('step5-indicator')
         };
 
-        // Update Indicator on Scroll
+        function scrollToStep(stepNum) {
+            const targetSection = Array.from(sections).find(section => 
+                parseInt(section.getAttribute('data-step')) === stepNum
+            );
+            if (targetSection) targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         container.addEventListener('scroll', () => {
             let currentStep = 0;
             let sectionId = "";
@@ -396,28 +415,22 @@
                 }
             });
             
-            // Show/Hide indicator based on intro
             if (currentStep === 0) {
                 indicator.classList.add('opacity-0');
+                indicator.style.transform = 'translate(-50%, 20px)';
             } else {
                 indicator.classList.remove('opacity-0');
+                indicator.style.transform = 'translate(-50%, 0)';
             }
 
-            // Update Active Step UI
             Object.keys(stepIndicators).forEach(step => {
-                const isActive = parseInt(step) === currentStep;
-                stepIndicators[step].classList.toggle('active', isActive);
+                stepIndicators[step].classList.toggle('active', parseInt(step) === currentStep);
             });
 
-            // Adjust indicator color for dark background (Slide 4 Moment)
-            if (sectionId === "step4-moment") {
-                indicator.classList.add('light-ui');
-            } else {
-                indicator.classList.remove('light-ui');
-            }
+            if (sectionId === "step4-moment") indicator.classList.add('light-ui');
+            else indicator.classList.remove('light-ui');
         });
 
-        // Popup Functions
         function openPopup(imgSrc) {
             document.getElementById('popup-img').src = imgSrc;
             document.getElementById('popup').classList.add('active');
